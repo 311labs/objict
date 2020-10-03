@@ -337,12 +337,14 @@ class objict(dict):
             d[k] = v
         return d
 
-    def copy(self):
+    def copy(self, shallow=True):
         """
         Return a shallow copy of this `objict`.
         For a deep copy, use `objict.fromdict` (as long as there aren't
         plain dict values that you don't want converted to `objict`).
         """
+        if shallow:
+            return objict(self)
         return objict.fromdict(self)
 
     def setdefault(self, key, default=None):
@@ -413,7 +415,8 @@ def _descend(obj, key):
     yet).
     """
     tokens = key.split(".")
-    assert len(tokens) > 1
+    if len(tokens) < 2:
+        raise ValueError(key)
     value = obj
     for token in tokens[:-1]:
         value = _get(value, token)

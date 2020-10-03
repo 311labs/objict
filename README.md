@@ -1,6 +1,20 @@
-Forked from UberDict with some added features and fixes!
+## Turn a dict into an Object or objict!
 
-Turn a dict into an Object or objict!
+Based on uberdict(https://raw.githubusercontent.com/eukaryote/uberdict)
+
+### Some Differences:
+
+ * Support for to/from JSON
+ * Support for to/from XML
+ * Support for to/from ZIP compression (base64)
+ * Support to/from file
+ * When an attribute is not found it returns None instead of raising an Error
+ * Support for .get("a.b.c")
+ * Support for delta between to objicts (obj.changes())
+ * Will automatically handle key conversion from "a.b.c" to "a -> b -> c" creation
+
+
+## Simple to use!
 
 ```python
 >>> from objict import objict

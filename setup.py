@@ -6,10 +6,13 @@ from setuptools.command.test import test as TestCommand
 import os
 import sys
 
-import objectdict
+import objict
 
 ROOT = os.path.abspath(os.path.dirname(__file__))
 
+tests_require = ['pytest', 'pytest-pep8']
+if sys.version_info[0] == 2:
+    tests_require.append('mock')
 
 def read(*filenames):
     buf = []
@@ -26,11 +29,23 @@ def read(*filenames):
 
 long_description = read('README.md')
 
+class PyTest(TestCommand):
+
+    def finalize_options(self):
+        TestCommand.finalize_options(self)
+        self.test_args = []
+        self.test_suite = True
+
+    def run_tests(self):
+        import pytest
+        errcode = pytest.main(self.test_args)
+        sys.exit(errcode)
+
 
 setup(
-    name='objectdict',
-    version=objectdict.__version__,
-    url='https://github.com/311labs/ObjectDict/',
+    name='objict',
+    version=objict.__version__,
+    url='https://github.com/311labs/objict/',
     author='Ian Starnes',
     author_email='ian@311labs.com',
     tests_require=tests_require,
@@ -40,20 +55,17 @@ setup(
         'well as hierarchical keys, JSON serialization, ZIP compression, and more.'
     ),
     long_description=long_description,
-    packages=['uberdict'],
+    packages=['objict'],
     platforms='any',
     test_suite='tests',
-    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, <4',
+    python_requires='>=3.5, <4',
     classifiers=[
         'Programming Language :: Python',
-        'Development Status :: 4 - Beta',
+        'Development Status :: 1.1.0 - Prod',
         'Natural Language :: English',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: Implementation :: CPython',
@@ -63,5 +75,6 @@ setup(
     ],
     extras_require={
         'dev': ['check-manifest', 'wheel'],
+        'test': tests_require,
     }
 )
