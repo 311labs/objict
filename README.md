@@ -1,3 +1,5 @@
+![](https://github.com/311labs/objict/workflows/tests/badge.svg)
+
 ## Turn a dict into an Object or objict!
 
 Based on uberdict(https://raw.githubusercontent.com/eukaryote/uberdict)
