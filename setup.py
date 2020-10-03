@@ -73,6 +73,9 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Utilities',
     ],
+    install_requires=[
+        'xmltodict',
+    ],
     extras_require={
         'dev': ['check-manifest', 'wheel'],
         'test': tests_require,

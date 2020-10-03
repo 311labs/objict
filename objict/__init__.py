@@ -7,7 +7,6 @@ import json
 try:
     import xmltodict
 except:
-    print("missing xmltodict")
     xmltodict = None
 
 import datetime
@@ -242,6 +241,8 @@ class objict(dict):
 
     @classmethod
     def fromXML(cls, xml):
+        if xmltodict is None:
+            raise Exception("missing module xmltodict")
         return cls.fromdict(xmltodict.parse(xml))
 
     @classmethod
@@ -304,6 +305,8 @@ class objict(dict):
         return d
 
     def toXML(self):
+        if xmltodict is None:
+            raise Exception("missing module xmltodict")
         return xmltodict.unparse(self, encoding="utf-8", full_document=False)
 
     @classmethod
