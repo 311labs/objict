@@ -29,7 +29,8 @@ else:
 # For internal use only as a value that can be used as a default
 # and should never exist in a dict.
 _MISSING = object()
-
+# we need these for DJANGO Fields
+_MISSING_RAISE_ON_KEYS = ["resolve_expression", "prepare_database_save", "as_sql", "get_placeholder"]
 
 class objict(dict):
     """
@@ -56,6 +57,10 @@ class objict(dict):
         by `setattr(ud, 'a.b', 'a.b')`.
         """
         dict.__init__(self, *args, **kwargs)
+
+    def __raise_on_missing__(self, key):
+        # you can override this to put keys you want to override on missing or all keys
+        return key in _MISSING_RAISE_ON_KEYS
 
     def __getitem__(self, key):
         """
@@ -118,8 +123,9 @@ class objict(dict):
             # '__missing__' if key is not in dict
             val = dict.get(self, key, _MISSING)
             if val is _MISSING:
+                if self.__raise_on_missing__(key):
+                    raise AttributeError("no attribute '%s'" % (key,))
                 return None
-                # raise AttributeError("no attribute '%s'" % (key,))
             return val
         except KeyError as e:
             raise AttributeError("no attribute '%s'" % (e.args[0],))
@@ -162,6 +168,21 @@ class objict(dict):
             return _get(obj, token)
         except KeyError:
             return default
+
+    def find(self, key, default=None, data=None):
+        # this will search the dict for the first key it finds that matches this
+        if data is None:
+            data = self
+        v = data.get(key, _MISSING)
+        if v != _MISSING:
+            return v
+        for k in data:
+            d = data.get(k)
+            if isinstance(d, dict):
+                v = self.find(key, _MISSING, d)
+                if v != _MISSING:
+                    return v
+        return default
 
     def changes(self, dict2, ignore_keys=None):
         changes = objict()
