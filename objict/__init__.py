@@ -222,7 +222,7 @@ class objict(dict):
 
     def save(self, path):
         with open(path, "w") as f:
-            f.write(self.toJSON(as_string=True))
+            f.write(self.toJSON(as_string=True, pretty=True))
             f.write("\n")
 
     @classmethod
@@ -295,7 +295,7 @@ class objict(dict):
             dict.__setitem__(ud, nk, v)
         return ud
 
-    def toJSON(self, as_string=False, fields=None, exclude=None, pretty=True):
+    def toJSON(self, as_string=False, fields=None, exclude=None, pretty=False):
         """
         By default this create a json ready dictionary
         or string
