@@ -1,4 +1,4 @@
-__version_info__ = (1, 1, 2)
+__version_info__ = (1, 1, 3)
 __version__ = ".".join(map(str, __version_info__))
 ALL = ["objict"]
 import sys
@@ -448,6 +448,15 @@ class nobjict(objict):
 
     def pop(self, key, *args):
         return dict.pop(self, key, *args)
+
+    def get(self, key, default=None):
+        if type(key) is list:
+            for k in key:
+                v = self.get(k, _MISSING)
+                if v != _MISSING:
+                    return v
+            return default
+        return dict.get(self, key, default)
 
 
 # helper to do careful and consistent `obj[name]`
