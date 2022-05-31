@@ -1,4 +1,4 @@
-__version_info__ = (1, 1, 3)
+__version_info__ = (1, 1, 5)
 __version__ = ".".join(map(str, __version_info__))
 ALL = ["objict"]
 import sys
@@ -342,6 +342,13 @@ class objict(dict):
         if as_string:
             return base64.b64encode(cout).decode("utf-8")
         return cout
+
+    @classmethod
+    def fromBase64(cls, data):
+        return cls.fromJSON(base64.urlsafe_b64decode(data).decode("utf-8"))
+
+    def toBase64(self):
+        return base64.urlsafe_b64encode(self.toJSON(as_string=True).encode()).decode("utf-8")
 
     def asDict(self, fields=None):
         return self.todict(fields)
