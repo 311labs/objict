@@ -43,7 +43,7 @@ class PyTest(TestCommand):
 
 
 setup(
-    name='objict',
+    name='pyobjict',
     version=objict.__version__,
     url='https://github.com/311labs/objict/',
     author='Ian Starnes',

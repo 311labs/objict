@@ -4,6 +4,13 @@
 
 Based on uberdict(https://raw.githubusercontent.com/eukaryote/uberdict)
 
+## Installation
+
+```
+pip install pyobjict
+```
+
+
 ### Some Differences:
 
  * Support for to/from JSON

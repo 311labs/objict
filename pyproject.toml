@@ -1,0 +1,44 @@
+[tool.poetry]
+name = "pyobjict"
+version = "1.1.6"
+description = "A Python dict that supports attribute-style access as well as hierarchical keys, JSON serialization, ZIP compression, and more."
+authors = ["Ian Starnes <ians@311labs.com>"]
+license = "MIT"
+readme = "README.md"
+
+packages = [
+    {include = "objict"}
+]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+
+[tool.poetry.group.dev.dependencies]
+bumpver = "^2022.1119"
+twine = "^4.0.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.bumpver]
+current_version = "1.1.6"
+version_pattern = "MAJOR.MINOR.PATCH"
+commit_message = "bump version {old_version} -> {new_version}"
+commit = false
+tag = true
+push = true
+
+[tool.bumpver.file_patterns]
+"pyproject.toml" = [
+    'current_version = "{version}"',
+]
+"setup.py" = [
+    "{version}",
+    "{pep440_version}",
+]
+"README.md" = [
+    "{version}",
+    "{pep440_version}",
+]
+
