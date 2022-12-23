@@ -1,4 +1,4 @@
-__version_info__ = (1, 1, 6)
+__version_info__ = (1, 1, 8)
 __version__ = ".".join(map(str, __version_info__))
 ALL = ["objict"]
 import sys
@@ -169,6 +169,26 @@ class objict(dict):
         except KeyError:
             return default
 
+    def sort(self, by_value=False, reverse=False):
+        if by_value:
+            return self.sortByValue(reverse=reverse)
+        keys = list(self.sortKeys(reverse=reverse))
+        old = self.copy()
+        self.clear()
+        for key in keys:
+            self[key] = old[key]
+        return self
+
+    def sortByValue(self, reverse=False):
+        marklist = sorted(self.items(), key=lambda x:x[1], reverse=reverse)
+        self.clear()
+        for key, value in marklist:
+            self[key] = value
+        return self
+
+    def sortKeys(self, reverse=False):
+        return sorted(self.keys(), reverse=reverse)
+
     def find(self, key, default=None, data=None):
         # this will search the dict for the first key it finds that matches this
         if data is None:
@@ -295,6 +315,9 @@ class objict(dict):
             dict.__setitem__(ud, nk, v)
         return ud
 
+    def tojson(self, as_string=False, fields=None, exclude=None, pretty=False):
+        return self.toJSON(as_string, fields, exclude, pretty)
+
     def toJSON(self, as_string=False, fields=None, exclude=None, pretty=False):
         """
         By default this create a json ready dictionary
@@ -353,6 +376,9 @@ class objict(dict):
     def asDict(self, fields=None):
         return self.todict(fields)
 
+    def toDict(self, fields=None):
+        return self.todict(fields)
+
     def todict(self, fields=None):
         """
         Create a plain `dict` from this `objict`.
@@ -377,6 +403,14 @@ class objict(dict):
         if shallow:
             return objict(self)
         return objict.fromdict(self)
+
+    def extend(self, *args, **kwargs):
+        for arg in args:
+            if isinstance(arg, dict):
+                self.extend(**arg)
+        for key in kwargs:
+            self[key] = kwargs[key]
+        return self
 
     def setdefault(self, key, default=None):
         """
