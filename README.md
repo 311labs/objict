@@ -2,7 +2,7 @@
 
 ## Turn a dict into an Object or objict!
 
-Based on uberdict(https://raw.githubusercontent.com/eukaryote/uberdict)
+Based on uberdict(https://github.com/eukaryote/uberdict)
 
 ## Installation
 
