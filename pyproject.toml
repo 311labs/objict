@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyobjict"
-version = "1.1.9"
+version = "1.1.10"
 description = "A Python dict that supports attribute-style access as well as hierarchical keys, JSON serialization, ZIP compression, and more."
 authors = ["Ian Starnes <ians@311labs.com>"]
 license = "MIT"

@@ -1,4 +1,4 @@
-__version_info__ = (1, 1, 9)
+__version_info__ = (1, 1, 10)
 __version__ = ".".join(map(str, __version_info__))
 ALL = ["objict"]
 import sys
@@ -332,11 +332,13 @@ class objict(dict):
             t = type(v)
             if exclude and k in exclude:
                 continue
+            elif v is None:
+                d[k] = v
             elif t in [int, str, float, bool, list]:
                 d[k] = v
             elif isinstance(v, objict):
                 d[k] = v.toJSON(pretty=pretty)
-            elif isinstance(v, datetime.date):
+            elif isinstance(v, datetime.datetime):
                 d[k] = time.mktime(v.timetuple())
             elif isinstance(v, datetime.date):
                 d[k] = v.strftime("%Y/%m/%d")
