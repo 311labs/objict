@@ -1,4 +1,4 @@
-__version_info__ = (1, 1, 8)
+__version_info__ = (1, 1, 9)
 __version__ = ".".join(map(str, __version_info__))
 ALL = ["objict"]
 import sys
@@ -332,16 +332,20 @@ class objict(dict):
             t = type(v)
             if exclude and k in exclude:
                 continue
+            elif t in [int, str, float, bool, list]:
+                d[k] = v
             elif isinstance(v, objict):
                 d[k] = v.toJSON(pretty=pretty)
             elif isinstance(v, datetime.date):
                 d[k] = time.mktime(v.timetuple())
             elif isinstance(v, datetime.date):
                 d[k] = v.strftime("%Y/%m/%d")
+            elif v.__class__.__name__ == "Decimal":
+                d[k] = float(v)
             elif hasattr(v, "id"):
                 d[k] = v.id
             else:
-                d[k] = v
+                d[k] = str(v)
         if as_string:
             if pretty:
                 return json.dumps(d, indent=4)
