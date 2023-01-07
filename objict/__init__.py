@@ -1,4 +1,4 @@
-__version_info__ = (1, 1, 10)
+__version_info__ = (1, 1, 11)
 __version__ = ".".join(map(str, __version_info__))
 ALL = ["objict"]
 import sys
@@ -337,6 +337,9 @@ class objict(dict):
             elif t in [int, str, float, bool, list]:
                 d[k] = v
             elif isinstance(v, objict):
+                d[k] = v.toJSON(pretty=pretty)
+            elif isinstance(v, dict):
+                v = objict.fromdict(v)
                 d[k] = v.toJSON(pretty=pretty)
             elif isinstance(v, datetime.datetime):
                 d[k] = time.mktime(v.timetuple())
