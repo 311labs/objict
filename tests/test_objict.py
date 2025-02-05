@@ -4,7 +4,7 @@ import sys
 
 import pytest
 
-from objict import _descend, _get, objict
+from objict import _descend, _get, objict, merge_dicts
 
 try:
     import cPickle as pickle
@@ -1223,3 +1223,39 @@ def test_subclass_missing_instance_variable_ignored():
         md['a']
     assert md.a is None
 
+
+def test_basic_merge():
+    d1 = {"a": 1, "b": 2}
+    d2 = {"b": 3, "c": 4}
+    result = merge_dicts(d1, d2)
+    assert result == {"a": 1, "b": 3, "c": 4}
+
+def test_nested_merge():
+    d1 = {"a": {"x": 10, "y": 20}, "b": 2}
+    d2 = {"a": {"y": 25, "z": 30}, "b": 3}
+    result = merge_dicts(d1, d2)
+    assert result == {"a": {"x": 10, "y": 25, "z": 30}, "b": 3}
+
+def test_remove_key_with_none():
+    d1 = {"a": 1, "b": {"c": 2}}
+    d2 = {"b": {"c": None}}
+    result = merge_dicts(d1, d2)
+    assert result == {"a": 1}
+
+def test_remove_empty_nested_dict():
+    d1 = {"a": {"x": 10}, "b": {"y": 20}}
+    d2 = {"a": {"x": None}, "b": {}}
+    result = merge_dicts(d1, d2)
+    assert result == {"b": {"y": 20}}
+
+def test_remove_none_nested_dict():
+    d1 = {"a": {"x": 10}, "b": {"y": 20}}
+    d2 = {"a": {"x": None}, "b": None}
+    result = merge_dicts(d1, d2)
+    assert result == {}
+
+def test_add_new_key():
+    d1 = {"a": 1}
+    d2 = {"b": 2}
+    result = merge_dicts(d1, d2)
+    assert result == {"a": 1, "b": 2}

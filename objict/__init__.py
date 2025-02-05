@@ -562,3 +562,42 @@ def _descend(obj, key):
     for token in tokens[:-1]:
         value = _get(value, token)
     return value, tokens[-1]
+
+
+def merge_dicts(dict1, dict2):
+    """
+    Merge two dictionaries recursively, updating dict1 with values from dict2.
+    This function updates dict1 in place.
+
+    - Handles nested dictionaries recursively.
+    - Removes keys from dict1 if their value in dict2 is `None`.
+    - Removes empty dictionaries from dict1 after merging.
+    - Adds new keys from dict2 to dict1.
+
+    Parameters:
+    - dict1 (dict): The first dictionary to be updated.
+    - dict2 (dict): The second dictionary, values from which will update dict1.
+
+    Example:
+    dict1 = {'a': 1, 'b': {'c': 3}}
+    dict2 = {'b': {'c': None}, 'd': 4}
+    After merge_dicts(dict1, dict2), dict1 becomes {'a': 1, 'd': 4}.
+    """
+    if not isinstance(dict1, dict):
+        raise TypeError("dict1 must be a dictionary")
+    if not isinstance(dict2, dict):
+        raise TypeError("dict2 must be a dictionary")
+    for key, value in dict2.items():
+        if isinstance(value, dict):
+            dict1_key = dict1.get(key)
+            if isinstance(dict1_key, dict):
+                merge_dicts(dict1_key, value)  # Recursively merge
+                if not dict1[key]:  # Remove if empty
+                    del dict1[key]
+            else:
+                dict1[key] = value  # Directly assign the new dictionary
+        elif value is None:
+            dict1.pop(key, None)  # Remove key from dict1
+        else:
+            dict1[key] = value  # Assign/overwrite key-value pair
+    return dict1
