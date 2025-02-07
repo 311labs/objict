@@ -1,92 +1,119 @@
 ![](https://github.com/311labs/objict/workflows/tests/badge.svg)
 
-## Turn a dict into an Object or objict!
+# objict
 
-Based on uberdict(https://github.com/eukaryote/uberdict)
+`objict` is a Python library that extends the standard dictionary to allow attribute-style access, hierarchical keys, and additional functionalities like JSON/XML serialization, delta comparison, and more. It's inspired by the [uberdict](https://github.com/eukaryote/uberdict) library.
 
 ## Installation
 
-```
+To install `objict`, use the following pip command:
+
+```bash
 pip install pyobjict
 ```
 
+## Features
 
-### Some Differences:
+- **Attribute Access**: Access dictionary values using dot notation (e.g., `d.key`).
+- **Hierarchical Keys**: Seamlessly handle nested dictionary structures with keys like `a.b.c`.
+- **Serialization**: Convert to/from JSON, XML, and ZIP formats.
+- **File Operations**: Read from and write to files conveniently.
+- **Delta Comparison**: Compute differences between two `objicts`.
+- **Resilient Missing Keys**: Returns `None` instead of raising an error for missing attributes.
+- **Type Safety and Conversion**: Supports type-safe fetching of values.
 
- * Support for to/from JSON
- * Support for to/from XML
- * Support for to/from ZIP compression (base64)
- * Support to/from file
- * When an attribute is not found it returns None instead of raising an Error
- * Support for .get("a.b.c")
- * Support for delta between to objicts (obj.changes())
- * Will automatically handle key conversion from "a.b.c" to "a -> b -> c" creation
-
-
-## Simple to use!
+## Basic Usage
 
 ```python
->>> from objict import objict
->>> d1 = objict(name="John", age=24)
->>> d1
-{'name': 'John', 'age': 24}
->>> d1.name
-'John'
->>> d1.age
-24
->>> d1.gender = "male"
->>> d1
-{'name': 'John', 'age': 24, 'gender': 'male'}
->>> d1.gender
-'male'
->>> import datetime
->>> d1.dob = datetime.datetime(1985, 5, 2)
->>> d1.dob
-datetime.datetime(1985, 5, 2, 0, 0)
->>> d1.toJSON()
-{'name': 'John', 'age': 24, 'gender': 'male', 'dob': 483865200.0}
->>> d1.save("test1.json")
->>> d2 = objict.fromFile("test1.json")
->>> d2
-{'name': 'John', 'age': 24, 'gender': 'male', 'dob': 483865200.0}
->>> d2.toXML()
-'<name>John</name><age>24</age><gender>male</gender><dob>483865200.0</dob>'
->>> d3 = objict(user1=d2)
->>> d3.user2 = objict(name="Jenny", age=27)
->>> d3
-{'user1': {'name': 'John', 'age': 24, 'gender': 'male', 'dob': 483865200.0}, 'user2': {'name': 'Jenny', 'age': 27}}
->>> d3.toXML()
-'<user1><name>John</name><age>24</age><gender>male</gender><dob>483865200.0</dob></user1><user2><name>Jenny</name><age>27</age></user2>'
->>> d3.toJSON(True)
-'{\n    "user1": {\n        "name": "John",\n        "age": 24,\n        "gender": "male",\n        "dob": 483865200.0\n    },\n    "user2": {\n        "name": "Jenny",\n        "age": 27\n    }\n}'
->>> print(d3.toJSON(True))
-{
-    "user1": {
-        "name": "John",
-        "age": 24,
-        "gender": "male",
-        "dob": 483865200.0
-    },
-    "user2": {
-        "name": "Jenny",
-        "age": 27
-    }
-}
->>> d3.toZIP()
-b'x\x9c\xab\xe6R\x00\x02\xa5\xd2\xe2\xd4"C%+\x85j0\x17,\x94\x97\x98\x9b\n\x14Q\xf2\xca\xcf\xc8S\xd2A\x88\'\xa6\x83\x84\x8dL\x90\x84\xd2S\xf3RR\x8b@\x8as\x13sR\x91\x15\xa7\xe4\'\x01\x85M,\x8c-\xccL\x8d\x0c\x0c\xf4\x0c\xc0R\xb5:\x08[\x8dp\xd8\x9a\x9a\x97W\x89\xc5Zs\x88\x01\\\xb5\x00^\x1c\'I'
->>> dz = d3.toZIP()
->>> d4 = objict.fromZIP(dz)
->>> d4
-{'user1': {'name': 'John', 'age': 24, 'gender': 'male', 'dob': 483865200.0}, 'user2': {'name': 'Jenny', 'age': 27}}
->>> d5 = d4.copy()
->>> d5.user1.name
-'John'
->>> d5.user1.name = "Jim"
->>> d5
-{'user1': {'name': 'Jim', 'age': 24, 'gender': 'male', 'dob': 483865200.0}, 'user2': {'name': 'Jenny', 'age': 27}}
->>> d5.changes(d4)
-{'user1': {'name': 'John'}}
+from objict import objict
 
+# Creating an objict
+d1 = objict(name="John", age=24)
+print(d1.name)  # Output: John
+print(d1["age"])  # Output: 24
+
+# Adding new attributes
+d1.gender = "male"
+print(d1.gender)  # Output: male
+
+# Nested objict
+d2 = objict(user=d1)
+print(d2.user.name)  # Output: John
 ```
 
+## Advanced Usage
 
+### Hierarchical Keys
+
+```python
+d3 = objict()
+d3.set("address.street", "123 Elm St")
+print(d3.address.street)  # Output: 123 Elm St
+```
+
+### Serialization
+
+#### JSON
+
+```python
+json_data = d1.to_json(as_string=True, pretty=True)
+print(json_data)
+```
+
+#### XML
+
+```python
+xml_data = d1.to_xml()
+print(xml_data)
+```
+
+#### ZIP Compression
+
+```python
+zip_data = d1.to_zip(as_string=True)
+```
+
+### File Operations
+
+```python
+d1.save("data.json")
+d3 = objict.from_file("data.json")
+print(d3)  # Reconstructed objict from file
+```
+
+### Delta Comparison
+
+```python
+d4 = objict(name="John", age=25)
+changes = d1.changes(d4)
+print(changes)  # Output: {'age': 25}
+```
+
+### Type Safety and Conversion
+
+```python
+dob = d1.get_typed("dob", typed=datetime.datetime)
+```
+
+### Handling Missing Keys and Defaults
+
+```python
+print(d1.unknown_key)  # Output: None
+
+d1.setdefault("country", "USA")
+print(d1.country)  # Output: USA
+```
+
+## Utility Methods
+
+- **to_json()**: Convert `objict` to JSON.
+- **to_xml()**: Convert `objict` to XML.
+- **to_zip()**: Compress `objict`.
+- **from_json(json_string)**: Create `objict` from JSON.
+- **from_file(path)**: Load `objict` from a file.
+- **copy(shallow=True)**: Create a copy of the `objict`.
+- **extend(\*args, \*\*kwargs)**: Merge another dictionary into this `objict`.
+
+## Conclusion
+
+`objict` is a versatile tool for developers who want more flexible dictionary operations in Python. Whether you're dealing with nested data, performing file I/O, or converting data formats, `objict` simplifies these tasks with a clean and Pythonic interface.
