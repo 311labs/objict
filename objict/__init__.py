@@ -1,4 +1,4 @@
-__version_info__ = (1, 1, 11)
+__version_info__ = (2, 0, 0)
 __version__ = ".".join(map(str, __version_info__))
 ALL = ["objict"]
 import sys
@@ -6,24 +6,16 @@ import json
 
 try:
     import xmltodict
-except:
+except ImportError:
     xmltodict = None
 
 import datetime
 import time
 import os
+import re
 
 import zlib
 import base64
-
-
-# py2/py3 compatibility
-if sys.version_info[0] == 2:
-    def iteritems(d):
-        return d.iteritems()
-else:
-    def iteritems(d):
-        return d.items()
 
 
 # For internal use only as a value that can be used as a default
@@ -147,8 +139,27 @@ class objict(dict):
         # pickle the contents of a objict as a list of items;
         # __getstate__ and __setstate__ aren't needed
         constructor = self.__class__
-        instance_args = (list(iteritems(self)),)
+        instance_args = (list(self.items()),)
         return constructor, instance_args
+
+    def get_typed(self, key, default=None, typed=None):
+        val = self.get(key, default)
+        if typed is None:
+            return val
+        try:
+            conversion_map = {
+                int: lambda v: int(v) if v != '' else 0,
+                str: str,
+                float: lambda v: float(v) if v != '' else 0.0,
+                bool: lambda v: v in [1, '1', 'y', 'Y', 'on', 'T', 't', 'True', 'true'],
+                list: lambda v: v if isinstance(v, (dict, list)) else v.split(',') if ',' in v else [v],
+                dict: lambda v: objict.from_json(v) if isinstance(v, str) else v,
+                datetime.datetime: parse_date,
+                datetime.date: lambda v: parse_date(v).date(),
+            }
+            return conversion_map.get(typed, lambda v: v)(val)
+        except Exception:
+            return default
 
     def get(self, key, default=None):
         # We can't use self[key] to support `get` here, because a missing key
@@ -171,22 +182,30 @@ class objict(dict):
 
     def sort(self, by_value=False, reverse=False):
         if by_value:
-            return self.sortByValue(reverse=reverse)
-        keys = list(self.sortKeys(reverse=reverse))
+            return self.sort_by_value(reverse=reverse)
+        keys = list(self.sort_keys(reverse=reverse))
         old = self.copy()
         self.clear()
         for key in keys:
             self[key] = old[key]
         return self
 
+    # deprecated
     def sortByValue(self, reverse=False):
+        return self.sort_by_value(reverse)
+
+    def sort_by_value(self, reverse=False):
         marklist = sorted(self.items(), key=lambda x:x[1], reverse=reverse)
         self.clear()
         for key, value in marklist:
             self[key] = value
         return self
 
+    # deprecated
     def sortKeys(self, reverse=False):
+        return self.sort_keys(reverse)
+
+    def sort_keys(self, reverse=False):
         return sorted(self.keys(), reverse=reverse)
 
     def find(self, key, default=None, data=None):
@@ -213,7 +232,7 @@ class objict(dict):
             v2 = dict2.get(k, None)
             if isinstance(v1, dict):
                 if not isinstance(v1, objict):
-                    v1 = objict.fromdict(v1)
+                    v1 = objict.from_dict(v1)
                 v = v1.changes(v2)
                 if len(v):
                     changes[k] = v
@@ -222,7 +241,11 @@ class objict(dict):
                     changes[k] = v2
         return changes
 
+    # deprecated
     def fromKeys(self, keys):
+        return self.from_keys(keys)
+
+    def from_keys(self, keys):
         # generates a new objict, but only with the
         # passed in keys
         d = objict()
@@ -231,7 +254,11 @@ class objict(dict):
             d[k] = v
         return d
 
+    # deprecated
     def lowerKeys(self):
+        return self.lower_keys()
+
+    def lower_keys(self):
         # generates a new objict, but only with the
         # passed in keys
         d = objict()
@@ -242,83 +269,17 @@ class objict(dict):
 
     def save(self, path):
         with open(path, "w") as f:
-            f.write(self.toJSON(as_string=True, pretty=True))
+            f.write(self.to_json(as_string=True, pretty=True))
             f.write("\n")
 
-    @classmethod
-    def fromFile(cls, path, ignore_errors=False):
-        if not os.path.isfile(path) or os.stat(path).st_size == 0:
-            f = open(path, "w")
-            f.write("{}")
-            f.close()
-        if not ignore_errors:
-            with open(path, "r") as f:
-                return cls.fromJSON(f.read())
-        try:
-            with open(path, "r") as f:
-                return cls.fromJSON(f.read())
-        except:
-            pass
-        return cls()
-
-    @classmethod
-    def fromkeys(self, seq, value=None):
-        return objict((elem, value) for elem in seq)
-
-    @classmethod
-    def fromJSON(cls, json_string, ignore_errors=False):
-        """
-        creates a dictionary json string
-        """
-        if ignore_errors:
-            try:
-                jmsg = json.loads(json_string)
-                return cls.fromdict(jmsg)
-            except:
-                return cls()
-
-        jmsg = json.loads(json_string)
-        return cls.fromdict(jmsg)
-
-    @classmethod
-    def fromXML(cls, xml):
-        if xmltodict is None:
-            raise Exception("missing module xmltodict")
-        return cls.fromdict(xmltodict.parse(xml))
-
-    @classmethod
-    def fromdict(cls, mapping, safe_keys=False):
-        """
-        Create a new `objict` from the given `mapping` dict.
-        The resulting `objict` will be equivalent to the input
-        `mapping` dict but with all dict instances (recursively)
-        converted to an `objict` instance.  If you don't want
-        this behavior (i.e., you want sub-dicts to remain plain dicts),
-        use `objict(mapping)` instead.
-        """
-        ud = cls()
-        for k in mapping:
-            nk = k
-            v = dict.__getitem__(mapping, k)  # okay for py2/py3
-            if isinstance(v, dict):
-                v = cls.fromdict(v)
-            elif isinstance(v, list):
-                nv = []
-                for lv in v:
-                    if isinstance(lv, dict):
-                        nv.append(cls.fromdict(lv))
-                    else:
-                        nv.append(lv)
-                v = nv
-            if safe_keys and "-" in nk:
-                nk = nk.replace("-", "_")
-            dict.__setitem__(ud, nk, v)
-        return ud
+    # deprecated
+    def toJSON(self, as_string=False, fields=None, exclude=None, pretty=False):
+            return self.to_json(as_string, fields, exclude, pretty)
 
     def tojson(self, as_string=False, fields=None, exclude=None, pretty=False):
-        return self.toJSON(as_string, fields, exclude, pretty)
+            return self.to_json(as_string, fields, exclude, pretty)
 
-    def toJSON(self, as_string=False, fields=None, exclude=None, pretty=False):
+    def to_json(self, as_string=False, fields=None, exclude=None, pretty=False):
         """
         By default this create a json ready dictionary
         or string
@@ -326,7 +287,7 @@ class objict(dict):
         d = dict()
         src = self
         if fields:
-            src = self.fromKeys(fields)
+            src = self.from_keys(fields)
         for k in src:
             v = dict.__getitem__(src, k)
             t = type(v)
@@ -337,10 +298,10 @@ class objict(dict):
             elif t in [int, str, float, bool, list]:
                 d[k] = v
             elif isinstance(v, objict):
-                d[k] = v.toJSON(pretty=pretty)
+                d[k] = v.to_json(pretty=pretty)
             elif isinstance(v, dict):
                 v = objict.fromdict(v)
-                d[k] = v.toJSON(pretty=pretty)
+                d[k] = v.to_json(pretty=pretty)
             elif isinstance(v, datetime.datetime):
                 d[k] = time.mktime(v.timetuple())
             elif isinstance(v, datetime.date):
@@ -358,37 +319,45 @@ class objict(dict):
         return d
 
     def toXML(self):
+        return self.to_xml()
+
+    def to_xml(self):
         if xmltodict is None:
             raise Exception("missing module xmltodict")
         return xmltodict.unparse(self, encoding="utf-8", full_document=False)
 
-    @classmethod
-    def fromZIP(cls, data):
-        if not isinstance(data, bytes):
-            data = base64.b64decode(data.encode("utf-8"))
-        return cls.fromJSON(zlib.decompress(data))
-
     def toZIP(self, as_string=False):
+        return self.to_zip(as_string)
+
+    def to_zip(self, as_string=False):
         # compress the dictionary to a zip
-        cout = zlib.compress(str.encode(self.toJSON(as_string=True)))
+        cout = zlib.compress(str.encode(self.to_json(as_string=True)))
         if as_string:
             return base64.b64encode(cout).decode("utf-8")
         return cout
 
-    @classmethod
-    def fromBase64(cls, data):
-        return cls.fromJSON(base64.urlsafe_b64decode(data).decode("utf-8"))
+    def to_base64(self):
+        return base64.urlsafe_b64encode(self.to_json(as_string=True).encode()).decode("utf-8")
 
     def toBase64(self):
-        return base64.urlsafe_b64encode(self.toJSON(as_string=True).encode()).decode("utf-8")
+        return base64.urlsafe_b64encode(self.to_json(as_string=True).encode()).decode("utf-8")
 
-    def asDict(self, fields=None):
-        return self.todict(fields)
-
-    def toDict(self, fields=None):
-        return self.todict(fields)
+    def as_dict(self, fields=None):
+        return self.to_dict(fields)
 
     def todict(self, fields=None):
+        return self.to_dict(fields)
+
+    # DeprecationWarning
+    def asDict(self, fields=None):
+        return self.to_dict(fields)
+
+    # DeprecationWarning
+    def toDict(self, fields=None):
+        return self.to_dict(fields)
+
+    # DeprecationWarning
+    def to_dict(self, fields=None):
         """
         Create a plain `dict` from this `objict`.
         The resulting `dict` will be equivalent to this `objict`
@@ -411,7 +380,7 @@ class objict(dict):
         """
         if shallow:
             return objict(self)
-        return objict.fromdict(self)
+        return objict.from_dict(self)
 
     def extend(self, *args, **kwargs):
         for arg in args:
@@ -422,6 +391,9 @@ class objict(dict):
         return self
 
     def setdefault(self, key, default=None):
+        return self.set_default(key, default)
+
+    def set_default(self, key, default=None):
         """
         If `key` is in the dictionary, return its value.
         If not, insert `key` with a value of `default` and return `default`,
@@ -470,6 +442,118 @@ class objict(dict):
         are stored.
         """
         return sorted(set(dir(objict)) | set(self.keys()))
+
+    # deprecated
+    @classmethod
+    def fromFile(cls, path, ignore_errors=False):
+        return cls.from_file(path, ignore_errors)
+
+    @classmethod
+    def from_file(cls, path, ignore_errors=False):
+        if not os.path.isfile(path) or os.stat(path).st_size == 0:
+            f = open(path, "w")
+            f.write("{}")
+            f.close()
+        if not ignore_errors:
+            with open(path, "r") as f:
+                return cls.from_json(f.read())
+        try:
+            with open(path, "r") as f:
+                return cls.from_json(f.read())
+        except:
+            pass
+        return cls()
+
+    # deprecated - conflicts with instance method
+    # @classmethod
+    # def fromKeys(cls, seq, value=None):
+    #     return cls.from_file(seq, value)
+
+    @classmethod
+    def dict_from_keys(self, seq, value=None):
+        return objict((elem, value) for elem in seq)
+
+    # deprecated
+    @classmethod
+    def fromJSON(cls, json_string, ignore_errors=False):
+        return cls.from_json(json_string, ignore_errors)
+
+    @classmethod
+    def from_json(cls, json_string, ignore_errors=False):
+        """
+        creates a dictionary json string
+        """
+        if ignore_errors:
+            try:
+                jmsg = json.loads(json_string)
+                return cls.from_dict(jmsg)
+            except:
+                return cls()
+
+        jmsg = json.loads(json_string)
+        return cls.from_dict(jmsg)
+
+    # deprecated
+    @classmethod
+    def fromXML(cls, xml):
+        return cls.from_xml(xml)
+
+    @classmethod
+    def from_xml(cls, xml):
+        if xmltodict is None:
+            raise Exception("missing module xmltodict")
+        return cls.from_dict(xmltodict.parse(xml))
+
+    @classmethod
+    def fromdict(cls, mapping, safe_keys=False):
+        return cls.from_dict(mapping, safe_keys)
+
+    @classmethod
+    def from_dict(cls, mapping, safe_keys=False):
+        """
+        Create a new `objict` from the given `mapping` dict.
+        The resulting `objict` will be equivalent to the input
+        `mapping` dict but with all dict instances (recursively)
+        converted to an `objict` instance.  If you don't want
+        this behavior (i.e., you want sub-dicts to remain plain dicts),
+        use `objict(mapping)` instead.
+        """
+        ud = cls()
+        for k in mapping:
+            nk = k
+            v = dict.__getitem__(mapping, k)  # okay for py2/py3
+            if isinstance(v, dict):
+                v = cls.fromdict(v)
+            elif isinstance(v, list):
+                nv = []
+                for lv in v:
+                    if isinstance(lv, dict):
+                        nv.append(cls.from_dict(lv))
+                    else:
+                        nv.append(lv)
+                v = nv
+            if safe_keys and "-" in nk:
+                nk = nk.replace("-", "_")
+            dict.__setitem__(ud, nk, v)
+        return ud
+
+    @classmethod
+    def fromZIP(cls, data):
+        return cls.from_zip(data)
+
+    @classmethod
+    def from_zip(cls, data):
+        if not isinstance(data, bytes):
+            data = base64.b64decode(data.encode("utf-8"))
+        return cls.from_json(zlib.decompress(data))
+
+    @classmethod
+    def fromBase64(cls, data):
+        return cls.from_json(base64.urlsafe_b64decode(data).decode("utf-8"))
+
+    @classmethod
+    def from_base64(cls, data):
+        return cls.from_json(base64.urlsafe_b64decode(data).decode("utf-8"))
 
 
 class nobjict(objict):
@@ -601,3 +685,48 @@ def merge_dicts(dict1, dict2):
         else:
             dict1[key] = value  # Assign/overwrite key-value pair
     return dict1
+
+
+def parse_date(date_str):
+    if isinstance(date_str, (int, float)):
+        # Assume it's epoch time
+        return datetime.datetime.fromtimestamp(date_str)
+
+    # Patterns for quick format detection
+    date_patterns = {
+        '/': ["%m/%d/%Y", "%m/%d/%y", "%d/%m/%Y", "%d/%m/%y", "%m/%d/%y %I:%M %p"],
+        '-': ["%Y-%m-%d", "%d-%m-%Y", "%Y-%m-%d %H:%M:%S", "%d-%m-%Y %H:%M:%S"],
+        '.': ["%d.%m.%Y", "%d.%m.%y"]
+    }
+
+    time_formats = ["%H:%M", "%H:%M:%S", "%I:%M %p", "%I:%M:%S %p"]
+
+    # Detect delimiter
+    delimiter = next((d for d in date_patterns if d in date_str), None)
+    formats_to_try = date_patterns.get(delimiter, [])
+
+    # Add ISO format detection
+    if re.match(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}', date_str):
+        formats_to_try.append("%Y-%m-%dT%H:%M:%S")
+
+    # Attempt to parse date with time if present
+    if any(char in date_str for char in [":", "AM", "PM"]):
+        formats_to_try += [f"{df} {tf}" for df in formats_to_try for tf in time_formats if ' ' not in df]
+        formats_to_try += time_formats
+
+    # Fallback common formats
+    formats_to_try += ["%Y%m%d", "%d%m%Y", "%B %d, %Y", "%d %B %Y", "%b %d, %Y", "%d %b %Y"]
+
+    for fmt in formats_to_try:
+        try:
+            return datetime.datetime.strptime(date_str, fmt)
+        except ValueError:
+            continue
+
+    # As a last resort, try parsing ISO 8601 format
+    try:
+        return datetime.datetime.fromisoformat(date_str)
+    except ValueError:
+        pass
+
+    raise ValueError(f"Date format not recognized: {date_str}")

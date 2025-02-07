@@ -1,10 +1,11 @@
 from collections.abc import Mapping
 from functools import partial
 import sys
+import datetime
 
 import pytest
 
-from objict import _descend, _get, objict, merge_dicts
+from objict import _descend, _get, objict, merge_dicts, parse_date
 
 try:
     import cPickle as pickle
@@ -851,7 +852,7 @@ def test_fromkeys_value():
 
 def test_fromkeys_dotted_keys():
     elems = ['a.b', 'a', 'b']
-    ud = objict.fromkeys(elems, objict())
+    ud = objict.dict_from_keys(elems, objict())
     assert items(ud) == [
         ('a', objict()),
         ('a.b', objict()),
@@ -1259,3 +1260,70 @@ def test_add_new_key():
     d2 = {"b": 2}
     result = merge_dicts(d1, d2)
     assert result == {"a": 1, "b": 2}
+
+def test_smart_parse_date():
+    test_cases = [
+        ("12/31/2023", datetime.datetime(2023, 12, 31, 0, 0)),
+        ("31/12/2023", datetime.datetime(2023, 12, 31, 0, 0)),
+        ("2023-12-31", datetime.datetime(2023, 12, 31, 0, 0)),
+        ("31-12-2023", datetime.datetime(2023, 12, 31, 0, 0)),
+        ("2023-12-31 23:59:59", datetime.datetime(2023, 12, 31, 23, 59, 59)),
+        ("12/31/23 11:59 PM", datetime.datetime(2023, 12, 31, 23, 59)),
+        ("20231231", datetime.datetime(2023, 12, 31, 0, 0)),
+        ("December 31, 2023", datetime.datetime(2023, 12, 31, 0, 0)),
+        ("31 December 2023", datetime.datetime(2023, 12, 31, 0, 0)),
+        ("Dec 31, 2023", datetime.datetime(2023, 12, 31, 0, 0)),
+        ("31 Dec 2023", datetime.datetime(2023, 12, 31, 0, 0)),
+        ("2023-12-31T23:59:59", datetime.datetime(2023, 12, 31, 23, 59, 59))
+    ]
+
+    for date_str, expected in test_cases:
+        assert parse_date(date_str) == expected
+
+
+
+@pytest.fixture
+def objict_instance():
+    return objict({
+        'integer': '42',
+        'float': '3.14',
+        'bool_true': 'True',
+        'bool_false': 'False',
+        'list': 'x,y,z',
+        'nested_dict': '{"key": "value"}',
+        'date_str': '2023-10-01',
+        'datetime_str': '2023-10-01T15:30:00',
+        'invalid_number': 'invalid',
+    })
+
+def test_integer_conversion(objict_instance):
+    assert objict_instance.get_typed('integer', typed=int) == 42
+    assert objict_instance.get_typed('invalid_number', default=0, typed=int) == 0
+
+def test_float_conversion(objict_instance):
+    assert objict_instance.get_typed('float', typed=float) == 3.14
+    assert objict_instance.get_typed('invalid_number', default=0.0, typed=float) == 0.0
+
+def test_boolean_conversion(objict_instance):
+    assert objict_instance.get_typed('bool_true', typed=bool) is True
+    assert objict_instance.get_typed('bool_false', typed=bool) is False
+    assert objict_instance.get_typed('invalid_number', default=False, typed=bool) is False
+
+def test_list_conversion(objict_instance):
+    assert objict_instance.get_typed('list', typed=list) == ['x', 'y', 'z']
+    assert objict_instance.get_typed('invalid_number', default=[], typed=list) == ['invalid']
+
+def test_dict_conversion(objict_instance):
+    assert objict_instance.get_typed('nested_dict', typed=dict) == objict({'key': 'value'})
+    assert objict_instance.get_typed('invalid_number', default=objict(), typed=dict) == objict()
+
+def test_date_conversion(objict_instance):
+    expected_date = datetime.date(2023, 10, 1)
+    assert objict_instance.get_typed('date_str', typed=datetime.date) == expected_date
+
+def test_datetime_conversion(objict_instance):
+    expected_datetime = datetime.datetime(2023, 10, 1, 15, 30)
+    assert objict_instance.get_typed('datetime_str', typed=datetime.datetime) == expected_datetime
+
+def test_default_return_value(objict_instance):
+    assert objict_instance.get_typed('non_existent', default='fallback', typed=str) == 'fallback'
