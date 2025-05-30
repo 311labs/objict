@@ -1,4 +1,4 @@
-__version_info__ = (2, 0, 0)
+__version_info__ = (2, 0, 1)
 __version__ = ".".join(map(str, __version_info__))
 ALL = ["objict"]
 import sys
@@ -8,6 +8,12 @@ try:
     import xmltodict
 except ImportError:
     xmltodict = None
+
+try:
+    import ujson
+except ImportError:
+    ujson = None
+# support for ujson can be turned off by objict.ujson = None
 
 import datetime
 import time
@@ -312,10 +318,11 @@ class objict(dict):
                 d[k] = v.id
             else:
                 d[k] = str(v)
+        serializer = json if ujson is None else ujson
         if as_string:
             if pretty:
-                return json.dumps(d, indent=4)
-            return json.dumps(d)
+                return serializer.dumps(d, indent=4)
+            return serializer.dumps(d)
         return d
 
     def toXML(self):
@@ -483,14 +490,15 @@ class objict(dict):
         """
         creates a dictionary json string
         """
+        serializer = json if ujson is None else ujson
         if ignore_errors:
             try:
-                jmsg = json.loads(json_string)
+                jmsg = serializer.loads(json_string)
                 return cls.from_dict(jmsg)
             except:
                 return cls()
 
-        jmsg = json.loads(json_string)
+        jmsg = serializer.loads(json_string)
         return cls.from_dict(jmsg)
 
     # deprecated
