@@ -1,4 +1,4 @@
-__version_info__ = (2, 0, 1)
+__version_info__ = (2, 0, 2)
 __version__ = ".".join(map(str, __version_info__))
 ALL = ["objict"]
 import sys
@@ -153,6 +153,18 @@ class objict(dict):
         if typed is None:
             return val
         try:
+            type_map = {
+                "int": int,
+                "str": str,
+                "float": float,
+                "bool": bool,
+                "list": list,
+                "dict": dict,
+                "datetime": datetime.datetime,
+                "date": datetime.date
+            }
+            if isinstance(typed, str):
+                typed = type_map.get(typed, None)
             conversion_map = {
                 int: lambda v: int(v) if v != '' else 0,
                 str: str,
