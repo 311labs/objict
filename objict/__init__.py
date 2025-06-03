@@ -1,4 +1,4 @@
-__version_info__ = (2, 0, 2)
+__version_info__ = (2, 0, 6)
 __version__ = ".".join(map(str, __version_info__))
 ALL = ["objict"]
 import sys
@@ -469,10 +469,6 @@ class objict(dict):
 
     @classmethod
     def from_file(cls, path, ignore_errors=False):
-        if not os.path.isfile(path) or os.stat(path).st_size == 0:
-            f = open(path, "w")
-            f.write("{}")
-            f.close()
         if not ignore_errors:
             with open(path, "r") as f:
                 return cls.from_json(f.read())
@@ -750,3 +746,10 @@ def parse_date(date_str):
         pass
 
     raise ValueError(f"Date format not recognized: {date_str}")
+
+
+def from_json(json_string, ignore_errors=False):
+    return objict.from_json(json_string, ignore_errors)
+
+def from_file(path, ignore_errors=False):
+    return objict.from_file(path, ignore_errors)

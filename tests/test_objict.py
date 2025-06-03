@@ -1,11 +1,15 @@
 from collections.abc import Mapping
 from functools import partial
 import sys
+import os
 import datetime
 
 import pytest
 
 from objict import _descend, _get, objict, merge_dicts, parse_date
+
+current_dir = os.path.dirname(__file__)
+
 
 try:
     import cPickle as pickle
@@ -1327,3 +1331,10 @@ def test_datetime_conversion(objict_instance):
 
 def test_default_return_value(objict_instance):
     assert objict_instance.get_typed('non_existent', default='fallback', typed=str) == 'fallback'
+
+def test_load_from_file():
+    example_json_path = os.path.join(current_dir, "example.json")
+    info = objict.from_file(example_json_path)
+    assert "name" in info
+    assert info["name"] == "Bob"
+    assert info["address"]["street"] == "123 Linda Lane"
