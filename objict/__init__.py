@@ -1,5 +1,5 @@
-__version_info__ = (2, 0, 6)
-__version__ = ".".join(map(str, __version_info__))
+__version_info__ = (2, 0, 7)
+__version__ = "2.0.7".join(map(str, __version_info__))
 ALL = ["objict"]
 import sys
 import json

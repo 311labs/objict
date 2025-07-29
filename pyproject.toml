@@ -1,7 +1,5 @@
 [project]
 name = "pyobjict"
-version = "0.0.0" # Placeholder - actual version determined by git tags
-dynamic = ["version"]
 description = "A Python dict that supports attribute-style access as well as hierarchical keys, JSON serialization, ZIP compression, and more."
 authors = [{ name = "Ian Starnes", email = "ians@311labs.com" }]
 license = { text = "MIT" }
@@ -27,6 +25,7 @@ Repository = "https://github.com/311labs/objict"
 Issues = "https://github.com/311labs/objict/issues"
 
 [tool.poetry]
+version = "2.0.7"
 packages = [{ include = "objict" }]
 
 [tool.poetry.group.dev.dependencies]
@@ -36,18 +35,5 @@ pytest-pep8 = "^1.0.6"
 pytest-cov = "^4.0.0"
 
 [build-system]
-requires = ["poetry-core", "poetry-dynamic-versioning"]
-build-backend = "poetry_dynamic_versioning.backend"
-
-[tool.poetry-dynamic-versioning]
-enable = true
-vcs = "git"
-style = "semver"
-format-jinja = "{% if distance == 0 %}{{ base }}{% else %}{{ base }}.dev{{ distance }}+{{ commit }}{% endif %}"
-
-[tool.poetry-dynamic-versioning.substitution]
-files = ["objict/__init__.py"]
-patterns = [
-    "(^__version__\\s*(?::.*?)?\\s*=\\s*['\"])[^'\"]*(['\"])",
-    "(^VERSION\\s*(?::.*?)?\\s*=\\s*['\"])[^'\"]*(['\"])",
-]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
