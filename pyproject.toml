@@ -1,36 +1,53 @@
-[tool.poetry]
+[project]
 name = "pyobjict"
-version = "2.0.6"
+version = "0.0.0" # Placeholder - actual version determined by git tags
+dynamic = ["version"]
 description = "A Python dict that supports attribute-style access as well as hierarchical keys, JSON serialization, ZIP compression, and more."
-authors = ["Ian Starnes <ians@311labs.com>"]
-license = "MIT"
+authors = [{ name = "Ian Starnes", email = "ians@311labs.com" }]
+license = { text = "MIT" }
 readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+keywords = ["dict", "object", "attribute", "json", "zip", "hierarchical"]
 
+[project.urls]
+Homepage = "https://github.com/311labs/objict"
+Repository = "https://github.com/311labs/objict"
+Issues = "https://github.com/311labs/objict/issues"
+
+[tool.poetry]
 packages = [{ include = "objict" }]
 
-[tool.poetry.dependencies]
-python = "^3.7"
-
 [tool.poetry.group.dev.dependencies]
-bumpver = "^2022.1119"
 twine = "^4.0.1"
 pytest = "^7.2.0"
 pytest-pep8 = "^1.0.6"
 pytest-cov = "^4.0.0"
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core", "poetry-dynamic-versioning"]
+build-backend = "poetry_dynamic_versioning.backend"
 
-[tool.bumpver]
-current_version = "1.1.6"
-version_pattern = "MAJOR.MINOR.PATCH"
-commit_message = "bump version {old_version} -> {new_version}"
-commit = false
-tag = true
-push = true
+[tool.poetry-dynamic-versioning]
+enable = true
+vcs = "git"
+style = "semver"
+format-jinja = "{% if distance == 0 %}{{ base }}{% else %}{{ base }}.dev{{ distance }}+{{ commit }}{% endif %}"
 
-[tool.bumpver.file_patterns]
-"pyproject.toml" = ['current_version = "{version}"']
-"setup.py" = ["{version}", "{pep440_version}"]
-"README.md" = ["{version}", "{pep440_version}"]
+[tool.poetry-dynamic-versioning.substitution]
+files = ["objict/__init__.py"]
+patterns = [
+    "(^__version__\\s*(?::.*?)?\\s*=\\s*['\"])[^'\"]*(['\"])",
+    "(^VERSION\\s*(?::.*?)?\\s*=\\s*['\"])[^'\"]*(['\"])",
+]
