@@ -3,7 +3,7 @@ name = "pyobjict"
 description = "A Python dict that supports attribute-style access as well as hierarchical keys, JSON serialization, ZIP compression, and more."
 authors = [{ name = "Ian Starnes", email = "ians@311labs.com" }]
 license = { text = "MIT" }
-version = "2.0.8"
+version = "2.0.9"
 readme = "README.md"
 requires-python = ">=3.8"
 classifiers = [
