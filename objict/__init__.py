@@ -1,5 +1,5 @@
-__version_info__ = (2, 0, 7)
-__version__ = "2.0.7".join(map(str, __version_info__))
+__version_info__ = (2, 0, 8)
+__version__ = "2.0.8".join(map(str, __version_info__))
 ALL = ["objict"]
 import sys
 import json
@@ -263,11 +263,13 @@ class objict(dict):
     def fromKeys(self, keys):
         return self.from_keys(keys)
 
-    def from_keys(self, keys):
+    def from_keys(self, keys, ignore_missing=False):
         # generates a new objict, but only with the
         # passed in keys
         d = objict()
         for k in keys:
+            if ignore_missing and k not in self:
+                continue
             v = dict.__getitem__(self, k)
             d[k] = v
         return d
