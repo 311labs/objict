@@ -1,5 +1,5 @@
-__version_info__ = (2, 0, 9)
-__version__ = "2.0.9".join(map(str, __version_info__))
+__version_info__ = (2, 1, 0)
+__version__ = "2.1.0".join(map(str, __version_info__))
 ALL = ["objict"]
 import sys
 import json
@@ -706,6 +706,10 @@ def merge_dicts(dict1, dict2):
 
 
 def parse_date(date_str):
+    if isinstance(date_str, str) and date_str.isdigit():
+        # Assume it's epoch time
+        return datetime.datetime.fromtimestamp(int(date_str))
+
     if isinstance(date_str, (int, float)):
         # Assume it's epoch time
         return datetime.datetime.fromtimestamp(date_str)
