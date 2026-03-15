@@ -706,8 +706,8 @@ def merge_dicts(dict1, dict2):
 
 
 def parse_date(date_str):
-    if isinstance(date_str, str) and date_str.isdigit():
-        # Assume it's epoch time
+    if isinstance(date_str, str) and date_str.isdigit() and len(date_str) != 8:
+        # Assume it's epoch time (8-digit strings are YYYYMMDD, not epoch)
         return datetime.datetime.fromtimestamp(int(date_str))
 
     if isinstance(date_str, (int, float)):
