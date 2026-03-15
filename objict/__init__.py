@@ -1,5 +1,5 @@
-__version_info__ = (2, 1, 1)
-__version__ = "2.1.1".join(map(str, __version_info__))
+__version_info__ = (2, 1, 0)
+__version__ = "2.1.0".join(map(str, __version_info__))
 ALL = ["objict"]
 import sys
 import json
@@ -714,6 +714,11 @@ def parse_date(date_str):
         # Assume it's epoch time
         return datetime.datetime.fromtimestamp(date_str)
 
+    # Fast-path ISO-8601 with timezone offset or Z (e.g. 2026-01-01T00:00:00+00:00)
+    if re.match(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.*(Z|[+-]\d{2}:\d{2})$', date_str):
+        iso_str = date_str[:-1] + '+00:00' if date_str.endswith('Z') else date_str
+        return datetime.datetime.fromisoformat(iso_str)
+
     # Patterns for quick format detection
     date_patterns = {
         '/': ["%m/%d/%Y", "%m/%d/%y", "%d/%m/%Y", "%d/%m/%y", "%m/%d/%y %I:%M %p"],
@@ -742,7 +747,7 @@ def parse_date(date_str):
     for fmt in formats_to_try:
         try:
             return datetime.datetime.strptime(date_str, fmt)
-        except ValueError:
+        except (ValueError, re.error):
             continue
 
     # As a last resort, try parsing ISO 8601 format
