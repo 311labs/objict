@@ -1,5 +1,5 @@
-__version_info__ = (2, 1, 2)
-__version__ = "2.1.2".join(map(str, __version_info__))
+__version_info__ = (2, 1, 3)
+__version__ = "2.1.3".join(map(str, __version_info__))
 ALL = ["objict"]
 import sys
 import json
@@ -536,6 +536,8 @@ class objict(dict):
         this behavior (i.e., you want sub-dicts to remain plain dicts),
         use `objict(mapping)` instead.
         """
+        if isinstance(mapping, list):
+            return [cls.from_dict(item) if isinstance(item, dict) else item for item in mapping]
         ud = cls()
         for k in mapping:
             nk = k
